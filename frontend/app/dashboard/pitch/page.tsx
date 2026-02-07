@@ -13,10 +13,10 @@ import {
     ArrowRight,
     ArrowLeft,
     Lightbulb,
-    Target,
-    Trophy
+    Zap
 } from "lucide-react";
 import LoadingAnimation from "@/components/PitchGenerator/LoadingAnimation";
+import TypingAnimation from "@/components/PitchGenerator/TypingAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { startupApi } from "@/lib/api/startup";
 
@@ -54,6 +54,8 @@ export default function PitchGeneratorPage() {
     const [generatedPitch, setGeneratedPitch] = useState('');
     const [copied, setCopied] = useState(false);
     const [startup, setStartup] = useState<any>(null);
+    const [isTyping, setIsTyping] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchStartup = async () => {
@@ -70,28 +72,40 @@ export default function PitchGeneratorPage() {
     const generatePitch = async (type: PitchType) => {
         setPitchType(type);
         setStep('generating');
+        setError('');
 
-        // Simulate AI processing time
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            // Call Gemini API for AI-powered pitch generation
+            const response = await fetch('/api/pitch/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    pitchType: type,
+                    startupData: startup,
+                    userData: user
+                })
+            });
 
-        let pitch = "";
-        const productName = startup?.name || "Our Startup";
-        const targetAudience = "target customers";
-        const problem = startup?.problemStatement || "a significant market pain point";
-        const solution = startup?.solution || "an innovative solution";
-        const traction = startup?.stage === 'ideation' ? "early validation" : "significant traction";
-        const vision = startup?.vision || "transforming the industry";
+            if (!response.ok) {
+                throw new Error('Failed to generate pitch');
+            }
 
-        if (type === 'elevator') {
-            pitch = `For ${targetAudience} who are frustrated by ${problem}, ${productName} is a ${solution}. Unlike alternatives, provides instant value and we have achieved ${traction}. Our vision is ${vision}.`;
-        } else if (type === 'investor') {
-            pitch = `**Problem**: ${problem}\n\n**Solution**: ${productName} - ${solution}\n\n**Market**: Targeting ${targetAudience} in the ${startup?.domain || "tech"} space.\n\n**Traction**: We are currently in the ${startup?.stage || "early"} stage with ${traction}.\n\n**Ask**: We are raising capital to scale operations and capture this market opportunity.`;
-        } else if (type === 'email') {
-            pitch = `Subject: Solving ${problem} for ${targetAudience}\n\nHi there,\n\nI noticed you're dealing with ${problem}. I'm the founder of ${productName}, where we have developed ${solution}.\n\nWe are seeing ${traction} and believe this could be valuable for you.\n\nOpen to a 10-min chat?\n\nBest,\n${user?.name || "Founder"}`;
+            const data = await response.json();
+
+            // Wait a bit for dramatic effect
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            setGeneratedPitch(data.pitch);
+            setStep('result');
+            setIsTyping(true);
+
+        } catch (error) {
+            console.error('Pitch generation error:', error);
+            setError('Failed to generate pitch. Please try again.');
+            setStep('select');
         }
-
-        setGeneratedPitch(pitch);
-        setStep('result');
     };
 
     const copyToClipboard = () => {
@@ -103,6 +117,7 @@ export default function PitchGeneratorPage() {
     const reset = () => {
         setStep('select');
         setPitchType(null);
+        setIsTyping(false);
     };
 
     return (
@@ -111,18 +126,28 @@ export default function PitchGeneratorPage() {
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-medium mb-4"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-medium mb-4"
                 >
                     <Sparkles className="w-4 h-4" />
-                    <span>AI-Powered Pitch Generator</span>
+                    <span>AI-Powered by Gemini</span>
                 </motion.div>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
                     Craft Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Perfect Pitch</span>
                 </h1>
                 <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                    Generate investor-ready decks, elevator pitches, and outreach emails instantly using your startup profile.
+                    Generate investor-ready decks, elevator pitches, and outreach emails instantly using AI.
                 </p>
             </header>
+
+            {error && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-center"
+                >
+                    {error}
+                </motion.div>
+            )}
 
             <AnimatePresence mode="wait">
                 {step === 'select' && (
@@ -137,7 +162,7 @@ export default function PitchGeneratorPage() {
                             <button
                                 key={type.id}
                                 onClick={() => generatePitch(type.id as PitchType)}
-                                className="group relative p-8 rounded-2xl bg-slate-900/50 border border-white/10 hover:border-white/20 transition-all hover:scale-105 text-left"
+                                className="group relative p-8 rounded-2xl bg-slate-900/50 border border-white/10 hover:border-white/20 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/10 text-left"
                             >
                                 <div className={`absolute inset-0 bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`} />
                                 <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${type.color} p-0.5 mb-6`}>
@@ -148,7 +173,8 @@ export default function PitchGeneratorPage() {
                                 <h3 className="text-xl font-bold text-white mb-2">{type.title}</h3>
                                 <p className="text-slate-400 text-sm leading-relaxed mb-6">{type.description}</p>
                                 <div className="flex items-center gap-2 text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-                                    Generate via AI <ArrowRight className="w-4 h-4" />
+                                    <Zap className="w-4 h-4" />
+                                    Generate with AI <ArrowRight className="w-4 h-4" />
                                 </div>
                             </button>
                         ))}
@@ -161,9 +187,18 @@ export default function PitchGeneratorPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="flex items-center justify-center min-h-[400px]"
+                        className="flex flex-col items-center justify-center min-h-[400px]"
                     >
                         <LoadingAnimation />
+                        <motion.p
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="mt-6 text-slate-400 text-center"
+                        >
+                            <Sparkles className="w-4 h-4 inline-block mr-2" />
+                            AI is crafting your perfect pitch...
+                        </motion.p>
                     </motion.div>
                 )}
 
@@ -182,14 +217,21 @@ export default function PitchGeneratorPage() {
                         </button>
 
                         <div className="bg-slate-900 rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-                            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+                            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
-                                        <Sparkles className="w-5 h-5" />
-                                    </div>
+                                    <motion.div
+                                        animate={isTyping ? {
+                                            scale: [1, 1.1, 1],
+                                            rotate: [0, 5, -5, 0]
+                                        } : {}}
+                                        transition={{ duration: 2, repeat: Infinity }}
+                                        className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500"
+                                    >
+                                        <Sparkles className="w-5 h-5 text-white" />
+                                    </motion.div>
                                     <div>
                                         <h3 className="font-bold text-white">AI Generated Pitch</h3>
-                                        <p className="text-xs text-slate-400">Optimized for high conversion</p>
+                                        <p className="text-xs text-slate-400">Powered by Gemini AI</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -212,9 +254,17 @@ export default function PitchGeneratorPage() {
 
                             <div className="p-8 bg-slate-950/50">
                                 <div className="prose prose-invert max-w-none">
-                                    <pre className="whitespace-pre-wrap font-sans text-lg text-slate-300 leading-relaxed bg-transparent border-none p-0">
-                                        {generatedPitch}
-                                    </pre>
+                                    {isTyping ? (
+                                        <TypingAnimation
+                                            text={generatedPitch}
+                                            speed={20}
+                                            onComplete={() => setIsTyping(false)}
+                                        />
+                                    ) : (
+                                        <pre className="whitespace-pre-wrap font-sans text-lg text-slate-300 leading-relaxed bg-transparent border-none p-0">
+                                            {generatedPitch}
+                                        </pre>
+                                    )}
                                 </div>
                             </div>
 

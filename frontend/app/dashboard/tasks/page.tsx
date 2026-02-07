@@ -101,20 +101,23 @@ export default function TasksPage() {
 
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!taskMilestone) {
-            setError("Please select a milestone");
-            return;
-        }
+        // Milestone is now optional - allow task creation without milestone
 
         try {
-            await taskApi.createTask({
+            const taskData: any = {
                 title: taskTitle,
                 description: taskDesc,
-                milestoneId: taskMilestone,
                 priority: taskPriority,
                 assignedTo: taskAssignedTo || undefined,
                 department: taskDepartment || (user?.role === 'team_member' && user.department ? user.department : undefined)
-            });
+            };
+
+            // Only include milestoneId if one is selected
+            if (taskMilestone) {
+                taskData.milestoneId = taskMilestone;
+            }
+
+            await taskApi.createTask(taskData);
             setShowTaskForm(false);
             resetTaskForm();
             fetchData();
@@ -378,18 +381,20 @@ export default function TasksPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-sm font-medium text-slate-300">Milestone</label>
+                                <label className="text-sm font-medium text-slate-300">Milestone (Optional)</label>
                                 <select
                                     value={taskMilestone}
                                     onChange={(e) => setTaskMilestone(e.target.value)}
-                                    required
                                     className="mt-1 flex h-10 w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white"
                                 >
-                                    <option value="">Select milestone</option>
+                                    <option value="">No milestone</option>
                                     {milestones.map(m => (
                                         <option key={m._id} value={m._id}>{m.title}</option>
                                     ))}
                                 </select>
+                                {milestones.length === 0 && (
+                                    <p className="text-xs text-amber-500 mt-1">Create a milestone first for better organization</p>
+                                )}
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-slate-300">Priority</label>
