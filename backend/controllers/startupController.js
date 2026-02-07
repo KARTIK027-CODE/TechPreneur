@@ -44,7 +44,7 @@ const getStartupProfile = async (req, res) => {
     try {
         const startup = await Startup.findById(req.user.startupId)
             .populate('founderId', 'name email')
-            .populate('teamMembers', 'name email role');
+            .populate('teamMembers', 'name email role department managerId');
 
         if (!startup) {
             return res.status(404).json({ message: 'Startup not found' });
@@ -94,12 +94,22 @@ const updateStartup = async (req, res) => {
 // @access  Private (Founder only)
 const addTeamMember = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, department } = req.body;
 
         const startup = await Startup.findById(req.user.startupId);
 
         if (!startup) {
             return res.status(404).json({ message: 'Startup not found' });
+        }
+
+        // Determine department based on user role
+        let assignedDepartment = department;
+        if (req.user.role === 'team_member') {
+            // Team members can only add to their own department
+            assignedDepartment = req.user.department;
+            if (department && department !== req.user.department) {
+                return res.status(403).json({ message: 'You can only add members to your own department' });
+            }
         }
 
         // Check if user already exists
@@ -112,6 +122,10 @@ const addTeamMember = async (req, res) => {
             }
 
             user.startupId = startup._id;
+            if (assignedDepartment) user.department = assignedDepartment;
+            if (req.user.role === 'team_member') {
+                user.managerId = req.user._id;
+            }
             await user.save();
         } else {
             // Create new user
@@ -120,7 +134,9 @@ const addTeamMember = async (req, res) => {
                 email,
                 password: password || 'defaultPassword123',
                 role: 'team_member',
+                department: assignedDepartment || null,
                 startupId: startup._id,
+                managerId: req.user.role === 'team_member' ? req.user._id : null,
             });
         }
 
@@ -131,12 +147,14 @@ const addTeamMember = async (req, res) => {
         }
 
         res.status(201).json({
-            message: 'Team member added successfully', user: {
+            message: 'Team member added successfully',
+            user: {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
-            }
+                department: user.department,
+            },
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

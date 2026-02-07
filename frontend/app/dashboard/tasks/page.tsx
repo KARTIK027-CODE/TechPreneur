@@ -60,8 +60,17 @@ export default function TasksPage() {
                 taskApi.getTasks(),
                 startupApi.getProfile()
             ]);
-            setMilestones(milestonesData);
-            setTasks(tasksData);
+            // Filter data based on user role and department
+            let filteredTasksData = tasksData;
+            let filteredMilestonesData = milestonesData;
+
+            if (user?.role === 'team_member' && user?.department) {
+                filteredTasksData = tasksData.filter((t: any) => t.department === user.department);
+                filteredMilestonesData = milestonesData.filter((m: any) => m.department === user.department);
+            }
+
+            setMilestones(filteredMilestonesData);
+            setTasks(filteredTasksData);
             if (startupData) {
                 setTeamMembers(startupData.teamMembers || []);
             }
@@ -103,7 +112,8 @@ export default function TasksPage() {
                 description: taskDesc,
                 milestoneId: taskMilestone,
                 priority: taskPriority,
-                assignedTo: taskAssignedTo || undefined
+                assignedTo: taskAssignedTo || undefined,
+                department: taskDepartment || (user?.role === 'team_member' && user.department ? user.department : undefined)
             });
             setShowTaskForm(false);
             resetTaskForm();
@@ -173,20 +183,24 @@ export default function TasksPage() {
                     <p className="text-slate-400 mt-2">Organize and track your startup execution</p>
                 </div>
                 <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowMilestoneForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Milestone
-                    </button>
-                    <button
-                        onClick={() => setShowTaskForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Task
-                    </button>
+                    {user?.role === 'founder' && (
+                        <>
+                            <button
+                                onClick={() => setShowMilestoneForm(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                New Milestone
+                            </button>
+                            <button
+                                onClick={() => setShowTaskForm(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                New Task
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -230,15 +244,15 @@ export default function TasksPage() {
                                         key={milestone._id}
                                         onClick={() => setSelectedMilestone(milestone._id)}
                                         className={`w-full text-left p-4 rounded-lg border transition-all ${selectedMilestone === milestone._id
-                                                ? 'bg-indigo-600/20 border-indigo-500/50'
-                                                : 'bg-slate-950 border-white/10 hover:border-white/20'
+                                            ? 'bg-indigo-600/20 border-indigo-500/50'
+                                            : 'bg-slate-950 border-white/10 hover:border-white/20'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between mb-2">
                                             <h4 className="font-medium text-white text-sm">{milestone.title}</h4>
                                             <span className={`text-xs px-2 py-0.5 rounded capitalize ${milestone.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                                                    milestone.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                                                        'bg-slate-500/20 text-slate-400'
+                                                milestone.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                                                    'bg-slate-500/20 text-slate-400'
                                                 }`}>
                                                 {milestone.status.replace('_', ' ')}
                                             </span>

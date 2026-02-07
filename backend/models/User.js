@@ -26,9 +26,19 @@ const userSchema = new mongoose.Schema(
             enum: ['founder', 'team_member'],
             default: 'team_member',
         },
+        department: {
+            type: String,
+            enum: ['Business', 'Marketing', 'Development', 'Sales', 'Operations', 'Finance', 'HR', 'Product'],
+            default: null,
+        },
         startupId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Startup',
+            default: null,
+        },
+        managerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
             default: null,
         },
     },

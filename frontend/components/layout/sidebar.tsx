@@ -21,7 +21,7 @@ const navigation = [
     { name: "Startup Profile", href: "/dashboard/startup", icon: Building2, requiresRole: null },
     { name: "Tasks & Milestones", href: "/dashboard/tasks", icon: CheckSquare, requiresRole: null },
     { name: "Feedback", href: "/dashboard/feedback", icon: MessageSquare, requiresRole: null },
-    { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, requiresRole: "founder" },
+    { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, requiresRole: null },
     { name: "Pitch Generator", href: "/dashboard/pitch", icon: FileText, requiresRole: "founder" },
 ];
 

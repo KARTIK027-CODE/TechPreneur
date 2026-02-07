@@ -4,6 +4,8 @@ export interface User {
     email: string;
     role: 'founder' | 'team_member';
     startupId?: string;
+    department?: string | null;
+    managerId?: string | null;
 }
 
 export interface Startup {

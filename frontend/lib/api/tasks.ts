@@ -37,6 +37,7 @@ export const taskApi = {
         description?: string;
         assignedTo?: string;
         priority?: 'low' | 'medium' | 'high';
+        department?: string;
     }): Promise<Task> => {
         const response = await api.post('/api/tasks/task', data);
         return response.data;

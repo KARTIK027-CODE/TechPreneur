@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { startupApi } from "@/lib/api/startup";
 import { Startup } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { CustomDropdown } from "@/components/CustomDropdown";
+import CustomDropdown from "@/components/CustomDropdown";
 
 type Tab = "profile" | "company" | "security" | "notifications";
 

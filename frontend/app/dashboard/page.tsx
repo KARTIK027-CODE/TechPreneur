@@ -49,22 +49,32 @@ export default function DashboardPage() {
 
             if (startupData) {
                 setStartup(startupData);
-                const completedTasksCount = tasks.filter((t: any) => t.status === 'completed').length;
-                const completedMilestonesCount = milestones.filter((m: any) => m.status === 'completed').length;
+
+                // Filter tasks based on user role and department
+                let filteredTasks = tasks;
+                let filteredMilestones = milestones;
+
+                if (user?.role === 'team_member' && user?.department) {
+                    filteredTasks = tasks.filter((t: any) => t.department === user.department);
+                    filteredMilestones = milestones.filter((m: any) => m.department === user.department);
+                }
+
+                const completedTasksCount = filteredTasks.filter((t: any) => t.status === 'completed').length;
+                const completedMilestonesCount = filteredMilestones.filter((m: any) => m.status === 'completed').length;
                 const avgRating = feedback.length > 0
                     ? feedback.reduce((sum: number, f: any) => sum + (f.rating || 0), 0) / feedback.length
                     : 0;
 
                 setMetrics({
-                    totalTasks: tasks.length,
+                    totalTasks: filteredTasks.length,
                     completedTasks: completedTasksCount,
-                    totalMilestones: milestones.length,
+                    totalMilestones: filteredMilestones.length,
                     completedMilestones: completedMilestonesCount,
                     teamMembers: startupData.teamMembers?.length || 0,
                     feedbackScore: Math.round(avgRating * 10) / 10
                 });
 
-                setRecentTasks(tasks.slice(0, 5));
+                setRecentTasks(filteredTasks.slice(0, 5));
             }
         } catch (error) {
             console.error("Failed to fetch dashboard data", error);
@@ -170,6 +180,15 @@ export default function DashboardPage() {
                         </span>
                         <span>•</span>
                         <span className="text-sm capitalize">{startup.stage.replace('_', ' ')}</span>
+                        {user?.department && (
+                            <>
+                                <span>•</span>
+                                <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm font-medium border border-purple-500/30 flex items-center gap-2">
+                                    <Users className="w-3 h-3" />
+                                    {user.department} Department
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className="flex gap-3">
@@ -179,13 +198,15 @@ export default function DashboardPage() {
                     >
                         View All Tasks
                     </Link>
-                    <Link
-                        href="/dashboard/tasks"
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors flex items-center gap-2"
-                    >
-                        <Rocket className="w-4 h-4" />
-                        New Milestone
-                    </Link>
+                    {user?.role === 'founder' && (
+                        <Link
+                            href="/dashboard/tasks"
+                            className="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors flex items-center gap-2"
+                        >
+                            <Rocket className="w-4 h-4" />
+                            New Milestone
+                        </Link>
+                    )}
                 </div>
             </motion.div>
 
@@ -291,18 +312,22 @@ export default function DashboardPage() {
                         Quick Actions
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <QuickActionCard
-                            title="New Task"
-                            icon={CheckCircle2}
-                            href="/dashboard/tasks"
-                            color="bg-emerald-600 hover:bg-emerald-500"
-                        />
-                        <QuickActionCard
-                            title="Add Milestone"
-                            icon={Target}
-                            href="/dashboard/tasks"
-                            color="bg-blue-600 hover:bg-blue-500"
-                        />
+                        {user?.role === 'founder' && (
+                            <>
+                                <QuickActionCard
+                                    title="New Task"
+                                    icon={CheckCircle2}
+                                    href="/dashboard/tasks"
+                                    color="bg-emerald-600 hover:bg-emerald-500"
+                                />
+                                <QuickActionCard
+                                    title="Add Milestone"
+                                    icon={Target}
+                                    href="/dashboard/tasks"
+                                    color="bg-blue-600 hover:bg-blue-500"
+                                />
+                            </>
+                        )}
                         <QuickActionCard
                             title="Team"
                             icon={Users}

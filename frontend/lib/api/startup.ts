@@ -24,7 +24,7 @@ export const startupApi = {
         return response.data;
     },
 
-    addTeamMember: async (data: { name: string; email: string; password: string; role: string }) => {
+    addTeamMember: async (data: { name: string; email: string; password: string; department?: string | null }) => {
         const response = await api.post('/api/startup/add-member', data);
         return response.data;
     },

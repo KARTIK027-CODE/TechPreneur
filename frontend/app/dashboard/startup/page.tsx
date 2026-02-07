@@ -6,6 +6,7 @@ import { startupApi } from "@/lib/api/startup";
 import { useAuth } from "@/contexts/AuthContext";
 import { Startup } from "@/types";
 import Link from "next/link";
+import CustomDropdown from "@/components/CustomDropdown";
 import { motion } from "framer-motion";
 
 export default function StartupProfilePage() {
@@ -29,12 +30,32 @@ export default function StartupProfilePage() {
     const [memberEmail, setMemberEmail] = useState("");
     const [memberName, setMemberName] = useState("");
     const [memberPassword, setMemberPassword] = useState("");
+    const [memberDepartment, setMemberDepartment] = useState("");
 
     const isFounder = user?.role === "founder";
+
+    const getFilteredMembers = () => {
+        if (!startup?.teamMembers) return [];
+        if (isFounder) return startup.teamMembers;
+        return startup.teamMembers.filter((m: any) =>
+            m.department === user?.department ||
+            m.managerId === user?._id ||
+            m._id === user?._id
+        );
+    };
+
+    const filteredMembers = getFilteredMembers();
 
     useEffect(() => {
         fetchStartup();
     }, []);
+
+    // Pre-fill department for team members
+    useEffect(() => {
+        if (showAddMember && !isFounder && user?.department) {
+            setMemberDepartment(user.department);
+        }
+    }, [showAddMember, isFounder, user]);
 
     const fetchStartup = async () => {
         try {
@@ -88,12 +109,13 @@ export default function StartupProfilePage() {
                 name: memberName,
                 email: memberEmail,
                 password: memberPassword,
-                role: 'member'
+                department: memberDepartment || null
             });
             setShowAddMember(false);
             setMemberEmail("");
             setMemberName("");
             setMemberPassword("");
+            setMemberDepartment("");
             fetchStartup();
             setSuccess("Team member added successfully!");
             setTimeout(() => setSuccess(""), 3000);
@@ -309,37 +331,56 @@ export default function StartupProfilePage() {
                                         <Users className="w-5 h-5 text-indigo-400" />
                                         <h3 className="text-xl font-bold text-white">Team</h3>
                                     </div>
-                                    {isFounder && (
-                                        <button
-                                            onClick={() => setShowAddMember(true)}
-                                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                                        >
-                                            <Plus className="w-5 h-5 text-indigo-400" />
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => setShowAddMember(true)}
+                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/10"
+                                        title="Add Team Member"
+                                    >
+                                        <Plus className="w-5 h-5 text-indigo-400" />
+                                    </button>
                                 </div>
 
                                 <div className="space-y-3">
-                                    {startup.teamMembers && startup.teamMembers.length > 0 ? (
-                                        startup.teamMembers.map((member: any) => (
-                                            <div
-                                                key={member._id}
-                                                className="flex items-center justify-between p-4 rounded-xl bg-slate-950/50 border border-white/10 hover:border-white/20 transition-all"
-                                            >
-                                                <div>
-                                                    <p className="font-medium text-white">{member.name}</p>
-                                                    <p className="text-sm text-slate-400">{member.email}</p>
+                                    {filteredMembers.length > 0 ? (
+                                        filteredMembers.map((member: any) => {
+                                            const isDirectReport = user?._id && member.managerId === user._id;
+                                            return (
+                                                <div
+                                                    key={member._id}
+                                                    className="flex items-center justify-between p-4 rounded-xl bg-slate-950/50 border border-white/10 hover:border-white/20 transition-all"
+                                                >
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <p className="font-medium text-white">{member.name}</p>
+                                                            {isDirectReport && (
+                                                                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                                                    Direct Report
+                                                                </span>
+                                                            )}
+                                                            {member.role === 'founder' && (
+                                                                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                                                                    Founder
+                                                                </span>
+                                                            )}
+                                                            {member.department && (
+                                                                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-white/10 text-slate-300">
+                                                                    {member.department}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-slate-400">{member.email}</p>
+                                                    </div>
+                                                    {isFounder && member.role !== 'founder' && (
+                                                        <button
+                                                            onClick={() => handleRemoveMember(member._id)}
+                                                            className="p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                {isFounder && member.role !== 'founder' && (
-                                                    <button
-                                                        onClick={() => handleRemoveMember(member._id)}
-                                                        className="p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     ) : (
                                         <p className="text-slate-400 text-sm text-center py-8">No team members yet</p>
                                     )}
@@ -349,19 +390,36 @@ export default function StartupProfilePage() {
                     </div>
                 )}
 
-                {/* Add Member Modal */}
+                {/* Create Member Modal */}
                 {showAddMember && (
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="bg-slate-900 rounded-2xl border border-white/10 w-full max-w-md p-8"
+                            className="bg-slate-900 rounded-2xl border border-white/10 w-full max-w-md p-8 shadow-2xl"
                         >
-                            <h3 className="text-2xl font-bold text-white mb-6">Add Team Member</h3>
+                            <h3 className="text-2xl font-bold text-white mb-6">Create Team Member</h3>
                             <form onSubmit={handleAddMember} className="space-y-4">
                                 <InputField label="Name" value={memberName} onChange={setMemberName} required />
                                 <InputField label="Email" type="email" value={memberEmail} onChange={setMemberEmail} required />
                                 <InputField label="Password" type="password" value={memberPassword} onChange={setMemberPassword} required minLength={6} />
+                                <CustomDropdown
+                                    label="Department"
+                                    value={memberDepartment}
+                                    onChange={setMemberDepartment}
+                                    options={[
+                                        { value: "Business", label: "💼 Business" },
+                                        { value: "Marketing", label: "📣 Marketing" },
+                                        { value: "Development", label: "💻 Development" },
+                                        { value: "Sales", label: "📈 Sales" },
+                                        { value: "Operations", label: "⚙️ Operations" },
+                                        { value: "Finance", label: "💰 Finance" },
+                                        { value: "HR", label: "👥 HR" },
+                                        { value: "Product", label: "🎯 Product" }
+                                    ]}
+                                    required
+                                    disabled={!isFounder}
+                                />
 
                                 <div className="flex gap-3 pt-4">
                                     <button
@@ -373,9 +431,9 @@ export default function StartupProfilePage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all"
+                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-indigo-500/20"
                                     >
-                                        Add Member
+                                        Create Account
                                     </button>
                                 </div>
                             </form>

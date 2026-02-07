@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { taskApi } from "@/lib/api/tasks";
 import { startupApi } from "@/lib/api/startup";
 import { Task, Milestone } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DEPARTMENTS = ["Business", "Marketing", "Development", "Sales", "Operations", "Finance", "HR", "Product"];
 
@@ -32,14 +33,17 @@ const DEPARTMENT_ICONS: any = {
 };
 
 export default function AnalyticsPage() {
+    const { user } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchAnalyticsData();
-    }, []);
+        if (user) {
+            fetchAnalyticsData();
+        }
+    }, [user]);
 
     const fetchAnalyticsData = async () => {
         try {
@@ -48,10 +52,23 @@ export default function AnalyticsPage() {
                 taskApi.getMilestones(),
                 startupApi.getProfile()
             ]);
-            setTasks(tasksData);
-            setMilestones(milestonesData);
+
+            let filteredTasks = tasksData;
+            let filteredMilestones = milestonesData;
+
+            if (user?.role === 'team_member' && user?.department) {
+                filteredTasks = tasksData.filter((t: any) => t.department === user.department);
+                filteredMilestones = milestonesData.filter((m: any) => m.department === user.department);
+            }
+
+            setTasks(filteredTasks);
+            setMilestones(filteredMilestones);
             if (startupData) {
-                setTeamMembers(startupData.teamMembers || []);
+                let members = startupData.teamMembers || [];
+                if (user?.role === 'team_member' && user?.department) {
+                    members = members.filter((m: any) => m.department === user.department);
+                }
+                setTeamMembers(members);
             }
         } catch (error) {
             console.error("Failed to fetch analytics", error);
