@@ -10,6 +10,8 @@ const taskRoutes = require('./routes/tasks');
 const feedbackRoutes = require('./routes/feedback');
 const analyticsRoutes = require('./routes/analytics');
 const pitchRoutes = require('./routes/pitch');
+const ideaRoutes = require('./routes/ideas');
+const ideaFeedbackRoutes = require('./routes/ideaFeedback');
 
 // Initialize app
 const app = express();
@@ -32,6 +34,8 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/pitch', pitchRoutes);
+app.use('/api/ideas', ideaRoutes);
+app.use('/api/idea-feedback', ideaFeedbackRoutes);
 
 // Health check route
 app.get('/', (req, res) => {

@@ -12,16 +12,19 @@ import {
     FileText,
     Settings,
     LogOut,
-    Crown
+    Crown,
+    Lightbulb,
+    Users
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, requiresRole: null },
     { name: "Startup Profile", href: "/dashboard/startup", icon: Building2, requiresRole: null },
     { name: "Tasks & Milestones", href: "/dashboard/tasks", icon: CheckSquare, requiresRole: null },
-    { name: "Feedback", href: "/dashboard/feedback", icon: MessageSquare, requiresRole: null },
+    { name: "Ideas & Validation", href: "/dashboard/ideas", icon: Lightbulb, requiresRole: null },
+    { name: "Team Management", href: "/dashboard/feedback", icon: Users, requiresRole: null },
     { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, requiresRole: null },
     { name: "Pitch Generator", href: "/dashboard/pitch", icon: FileText, requiresRole: "founder" },
     { name: "Premium", href: "/dashboard/premium", icon: Crown, requiresRole: "founder", premium: true },
@@ -42,11 +45,14 @@ export function Sidebar() {
 
     return (
         <div className="flex flex-col h-full w-64 bg-slate-950 border-r border-white/5">
-            <div className="p-6 flex items-center gap-2 font-bold text-xl text-slate-100">
-                <div className="bg-indigo-600 p-1.5 rounded-lg">
-                    <Rocket className="w-5 h-5 text-white" />
+            <div className="p-6 flex items-center gap-3 font-bold text-xl text-slate-100 border-b border-white/5">
+                <div key={user?._id || 'default'} className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                    {getInitials(user?.name || "") || <Rocket className="w-5 h-5 text-white" />}
                 </div>
-                <span>VentureX</span>
+                <div>
+                    <span className="block text-sm text-slate-400 font-normal">Workspace</span>
+                    <span>VentureX</span>
+                </div>
             </div>
 
             <nav className="flex-1 px-4 space-y-1 mt-4">

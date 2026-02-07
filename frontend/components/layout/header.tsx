@@ -3,7 +3,12 @@
 import { Bell, Search, Command } from "lucide-react";
 import { VoiceAssistant } from '../VoiceAssistant';
 
+import { useAuth } from "@/contexts/AuthContext";
+import { getInitials } from "@/lib/utils";
+
 export function Header() {
+    const { user } = useAuth();
+
     return (
         <header className="h-16 border-b border-white/5 bg-slate-950/50 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-20">
             <div className="flex items-center gap-4 flex-1">
@@ -34,7 +39,7 @@ export function Header() {
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full border-2 border-slate-950"></span>
                 </button>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-white/10 flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:scale-105 transition-transform">
-                    KC
+                    {getInitials(user?.name || "") || "KC"}
                 </div>
             </div>
         </header>
