@@ -399,7 +399,7 @@ npm run dev
 ## 👥 Team
 
 **Built for IIT Jammu Hackathon**  
-Developed by: Kartik Choudhary
+Developed by: Team Neo
 
 ---
 
