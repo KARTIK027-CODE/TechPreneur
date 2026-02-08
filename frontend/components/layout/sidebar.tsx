@@ -14,7 +14,8 @@ import {
     LogOut,
     Crown,
     Lightbulb,
-    Users
+    Users,
+    Landmark
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +27,7 @@ const navigation = [
     { name: "Ideas & Validation", href: "/dashboard/ideas", icon: Lightbulb, requiresRole: null },
     { name: "Team Management", href: "/dashboard/feedback", icon: Users, requiresRole: null },
     { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, requiresRole: null },
+    { name: "Government Schemes", href: "/dashboard/schemes", icon: Landmark, requiresRole: "founder" },
     { name: "Pitch Generator", href: "/dashboard/pitch", icon: FileText, requiresRole: "founder" },
     { name: "Premium", href: "/dashboard/premium", icon: Crown, requiresRole: "founder", premium: true },
 ];
